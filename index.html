@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DRM URL Converter</title>
+    <style>
+        /* ─── Reset & Base ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0d11;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(30, 60, 120, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(80, 30, 120, 0.10) 0%, transparent 60%);
+        }
+
+        .card {
+            background: #14171e;
+            border-radius: 28px;
+            padding: 32px 36px 36px;
+            max-width: 780px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        /* ─── Header ─── */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 6px;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #4f7cff, #7c5cfc);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 8px 24px rgba(79, 124, 255, 0.25);
+        }
+
+        .header h1 {
+            color: #f0f2f8;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            color: #8a8fa8;
+            font-size: 14px;
+            font-weight: 400;
+            margin-top: -2px;
+            margin-bottom: 24px;
+            padding-left: 58px;
+            letter-spacing: 0.2px;
+        }
+
+        /* ─── Tabs ─── */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #1a1e28;
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 28px;
+            border: 1px solid #2a2f3d;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: #8a8fa8;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+            font-family: inherit;
+            letter-spacing: 0.2px;
+        }
+
+        .tab-btn:hover {
+            color: #c8cde0;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            background: #2a2f3d;
+            color: #f0f2f8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeUp 0.3s ease forwards;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Form Elements ─── */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #c8cde0;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group label .badge {
+            font-size: 10px;
+            font-weight: 500;
+            background: rgba(79, 124, 255, 0.15);
+            color: #7c9aff;
+            padding: 1px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+            letter-spacing: 0.2px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 13px 16px;
+            background: #1a1e28;
+            border: 1px solid #2a2f3d;
+            border-radius: 12px;
+            color: #f0f2f8;
+            font-size: 15px;
+            font-family: 'Inter', monospace;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            outline: none;
+        }
+
+        .form-group input::placeholder {
+            color: #5a6077;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            border-color: #4f7cff;
+            box-shadow: 0 0 0 4px rgba(79, 124, 255, 0.12);
+        }
+
+        .form-group input.valid {
+            border-color: #2b8f6b;
+        }
+
+        .form-group input.invalid {
+            border-color: #c44a5a;
+        }
+
+        .form-hint {
+            color: #5a6077;
+            font-size: 12px;
+            margin-top: 6px;
+            padding-left: 4px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ─── Buttons ─── */
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4f7cff, #6b4cfc);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.25s ease;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 36px rgba(79, 124, 255, 0.30);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0px);
+        }
+
+        .btn-primary svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* ─── Result Output ─── */
+        .result-box {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            background: #1a1e28;
+            border: 1px solid #2a2f3d;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.25s ease;
+            margin-top: 6px;
+        }
+
+        .result-box:focus-within {
+            border-color: #4f7cff;
+            box-shadow: 0 0 0 4px rgba(79, 124, 255, 0.08);
+        }
+
+        .result-box input {
+            flex: 1;
+            padding: 13px 16px;
+            background: transparent;
+            border: none;
+            color: #e8ebf5;
+            font-size: 14px;
+            font-family: 'Inter', monospace;
+            outline: none;
+            min-width: 0;
+            word-break: break-all;
+        }
+
+        .result-box input::selection {
+            background: rgba(79, 124, 255, 0.25);
+        }
+
+        .result-box .btn-copy {
+            flex-shrink: 0;
+            background: transparent;
+            border: none;
+            color: #8a8fa8;
+            padding: 0 16px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.2s ease, transform 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-box .btn-copy:hover {
+            color: #f0f2f8;
+            transform: scale(1.05);
+        }
+
+        .result-box .btn-copy:active {
+            transform: scale(0.92);
+        }
+
+        .result-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .result-label span {
+            color: #c8cde0;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .result-label .copy-feedback {
+            font-size: 12px;
+            color: #2b8f6b;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .result-label .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* ─── Parsed fields in parse tab ─── */
+        .parsed-fields .form-group input {
+            background: #10131c;
+            color: #b0b8d0;
+        }
+
+        .parsed-fields .form-group input:read-only {
+            cursor: default;
+        }
+
+        .parse-result-message {
+            color: #5a6077;
+            font-size: 13px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .parse-result-message.success {
+            color: #2b8f6b;
+        }
+
+        .parse-result-message.error {
+            color: #c44a5a;
+        }
+
+        /* ─── Example Badge ─── */
+        .example-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid #2a2f3d;
+            border-radius: 20px;
+            padding: 4px 14px 4px 10px;
+            font-size: 12px;
+            color: #8a8fa8;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            margin-top: 6px;
+        }
+
+        .example-badge:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: #3a3f51;
+        }
+
+        .example-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4f7cff;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 600px) {
+            .card {
+                padding: 24px 16px 28px;
+                border-radius: 20px;
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .header-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+                border-radius: 12px;
+            }
+
+            .subtitle {
+                padding-left: 52px;
+                font-size: 13px;
+            }
+
+            .result-box input {
+                font-size: 13px;
+                padding: 11px 14px;
+            }
+
+            .btn-primary {
+                font-size: 15px;
+                padding: 14px;
+            }
+
+            .tab-btn {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .card {
+                padding: 16px 12px 20px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .subtitle {
+                padding-left: 0;
+                margin-top: 4px;
+            }
+
+            .header-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 16px;
+            }
+
+            .form-group input {
+                font-size: 14px;
+                padding: 11px 14px;
+            }
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #14171e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2f3d;
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3f51;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">🔐</div>
+            <h1>DRM URL Converter</h1>
+        </div>
+        <p class="subtitle">Convert between full DRM URL and its components</p>
+
+        <!-- Tabs -->
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" data-tab="generate" role="tab" aria-selected="true">Generate URL</button>
+            <button class="tab-btn" data-tab="parse" role="tab" aria-selected="false">Parse URL</button>
+        </div>
+
+        <!-- ─── Tab 1: Generate ─── -->
+        <div class="tab-panel active" id="panel-generate" role="tabpanel">
+            <form id="generateForm" autocomplete="off">
+                <div class="form-group">
+                    <label>
+                        Stream URL
+                        <span class="badge">MPD</span>
+                    </label>
+                    <input
+                    type="url"
+                    id="streamUrl"
+                    placeholder="https://example.com/manifest.mpd"
+                    value="https://a96aivottlinear-a.akamaihd.net/OTTB/pdx-nitro/live/clients/dash/enc/ckf6fg9kkq/out/v1/9ca7805c1e1f43fd816c16887f56bd6c/cenc.mpd"
+                    spellcheck="false"
+                    />
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>
+                            Key ID
+                            <span class="badge">32 hex</span>
+                        </label>
+                        <input
+                        type="text"
+                        id="keyId"
+                        placeholder="6818868b06409ee7869850f878c30665"
+                        value="6818868b06409ee7869850f878c30665"
+                        spellcheck="false"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            DRM Key
+                            <span class="badge">32 hex</span>
+                        </label>
+                        <input
+                        type="text"
+                        id="drmKey"
+                        placeholder="4766f05f2c1de3cd0896ccd99f662fd1"
+                        value="4766f05f2c1de3cd0896ccd99f662fd1"
+                        spellcheck="false"
+                        />
+                    </div>
+                </div>
+
+                <div class="example-badge" id="exampleBadgeGenerate">
+                    <span class="dot"></span>
+                    Use example from prompt
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+                    Generate URL
+                </button>
+            </form>
+
+            <!-- Result for generate -->
+            <div class="result-section" id="generateResult" style="margin-top:24px; display:none;">
+                <div class="result-label">
+                    <span>✨ Generated URL</span>
+                    <span class="copy-feedback" id="copyFeedbackGen">✓ Copied!</span>
+                </div>
+                <div class="result-box">
+                    <input type="text" id="resultUrl" readonly spellcheck="false" />
+                    <button class="btn-copy" id="copyBtnGen" title="Copy to clipboard">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div style="margin-top:10px; color:#5a6077; font-size:12px;">
+                    Uses <code style="background:#1a1e28;padding:2px 8px;border-radius:4px;color:#8a8fa8;">|drmScheme=clearkey&drmLicense=keyid:key</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Tab 2: Parse ─── -->
+        <div class="tab-panel" id="panel-parse" role="tabpanel">
+            <form id="parseForm" autocomplete="off">
+                <div class="form-group">
+                    <label>
+                        Full DRM URL
+                        <span class="badge">with pipe</span>
+                    </label>
+                    <input
+                    type="text"
+                    id="fullUrlInput"
+                    placeholder="https://...cenc.mpd|drmScheme=clearkey&drmLicense=..."
+                    spellcheck="false"
+                    />
+                    <div class="form-hint">Paste the complete URL including the <code>|drmScheme=...</code> part</div>
+                </div>
+
+                <div class="example-badge" id="exampleBadgeParse">
+                    <span class="dot"></span>
+                    Use example from prompt
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top:8px;">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+                    Parse URL
+                </button>
+            </form>
+
+            <!-- Parsed result -->
+            <div id="parseResult" style="margin-top:24px; display:none;">
+                <div class="parsed-fields">
+                    <div class="form-group">
+                        <label>Stream URL</label>
+                        <input type="text" id="parsedStream" readonly spellcheck="false" />
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Key ID</label>
+                            <input type="text" id="parsedKeyId" readonly spellcheck="false" />
+                        </div>
+                        <div class="form-group">
+                            <label>DRM Key</label>
+                            <input type="text" id="parsedDrmKey" readonly spellcheck="false" />
+                        </div>
+                    </div>
+                </div>
+                <div id="parseMessage" class="parse-result-message"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── DOM refs (Generate) ───
+            const streamUrlInput = document.getElementById('streamUrl');
+            const keyIdInput = document.getElementById('keyId');
+            const drmKeyInput = document.getElementById('drmKey');
+            const generateForm = document.getElementById('generateForm');
+            const generateResult = document.getElementById('generateResult');
+            const resultUrlInput = document.getElementById('resultUrl');
+            const copyBtnGen = document.getElementById('copyBtnGen');
+            const copyFeedbackGen = document.getElementById('copyFeedbackGen');
+
+            // ─── DOM refs (Parse) ───
+            const fullUrlInput = document.getElementById('fullUrlInput');
+            const parseForm = document.getElementById('parseForm');
+            const parseResult = document.getElementById('parseResult');
+            const parsedStream = document.getElementById('parsedStream');
+            const parsedKeyId = document.getElementById('parsedKeyId');
+            const parsedDrmKey = document.getElementById('parsedDrmKey');
+            const parseMessage = document.getElementById('parseMessage');
+
+            // ─── Example data ───
+            const EXAMPLE = {
+                streamUrl: 'https://a96aivottlinear-a.akamaihd.net/OTTB/pdx-nitro/live/clients/dash/enc/ckf6fg9kkq/out/v1/9ca7805c1e1f43fd816c16887f56bd6c/cenc.mpd',
+                keyId: '6818868b06409ee7869850f878c30665',
+                drmKey: '4766f05f2c1de3cd0896ccd99f662fd1'
+            };
+
+            function buildFullUrl(stream, keyId, key) {
+                const s = stream.trim();
+                const kId = keyId.trim();
+                const k = key.trim();
+                if (!s || !kId || !k) return null;
+                // remove existing pipe fragment
+                let base = s;
+                const pipeIdx = base.indexOf('|');
+                if (pipeIdx !== -1) base = base.substring(0, pipeIdx);
+                base = base.replace(/[?&]$/, '');
+                return `${base}|drmScheme=clearkey&drmLicense=${kId}:${k}`;
+            }
+
+            function parseFullUrl(full) {
+                // Expect format: streamUrl|drmScheme=clearkey&drmLicense=keyId:key
+                const trimmed = full.trim();
+                if (!trimmed) return null;
+
+                // Split on '|' but only first occurrence
+                const pipeIdx = trimmed.indexOf('|');
+                if (pipeIdx === -1) return null;
+
+                const stream = trimmed.substring(0, pipeIdx);
+                const query = trimmed.substring(pipeIdx + 1);
+
+                // parse query string
+                const params = new URLSearchParams(query);
+                const drmLicense = params.get('drmLicense');
+                if (!drmLicense) return null;
+
+                const colonIdx = drmLicense.indexOf(':');
+                if (colonIdx === -1) return null;
+                const keyId = drmLicense.substring(0, colonIdx);
+                const drmKey = drmLicense.substring(colonIdx + 1);
+
+                if (!keyId || !drmKey) return null;
+                return { stream, keyId, drmKey };
+            }
+
+            // ─── Validation helpers ───
+            function isValidHex(str) {
+                return /^[0-9a-fA-F]{32}$/.test(str.trim());
+            }
+
+            function validateGenerate() {
+                const keyId = keyIdInput.value.trim();
+                const key = drmKeyInput.value.trim();
+                let valid = true;
+                if (!isValidHex(keyId)) {
+                    keyIdInput.classList.add('invalid');
+                    keyIdInput.classList.remove('valid');
+                    valid = false;
+                } else {
+                    keyIdInput.classList.remove('invalid');
+                    keyIdInput.classList.add('valid');
+                }
+                if (!isValidHex(key)) {
+                    drmKeyInput.classList.add('invalid');
+                    drmKeyInput.classList.remove('valid');
+                    valid = false;
+                } else {
+                    drmKeyInput.classList.remove('invalid');
+                    drmKeyInput.classList.add('valid');
+                }
+                return valid;
+            }
+
+            // ─── Generate action ───
+            function handleGenerate(e) {
+                e.preventDefault();
+                const stream = streamUrlInput.value;
+                const keyId = keyIdInput.value;
+                const key = drmKeyInput.value;
+
+                // stream validation
+                if (!stream.trim()) {
+                    streamUrlInput.classList.add('invalid');
+                    streamUrlInput.classList.remove('valid');
+                    generateResult.style.display = 'none';
+                    return;
+                } else {
+                    streamUrlInput.classList.remove('invalid');
+                    streamUrlInput.classList.add('valid');
+                }
+
+                const valid = validateGenerate();
+                const full = buildFullUrl(stream, keyId, key);
+                if (full && valid) {
+                    resultUrlInput.value = full;
+                    generateResult.style.display = 'block';
+                    // scroll if needed
+                    if (window.innerWidth < 600) {
+                        generateResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } else {
+                    // show partial result even if invalid, but only if we have a full
+                    if (full) {
+                        resultUrlInput.value = full;
+                        generateResult.style.display = 'block';
+                    } else {
+                        generateResult.style.display = 'none';
+                    }
+                }
+            }
+
+            // ─── Parse action ───
+            function handleParse(e) {
+                e.preventDefault();
+                const full = fullUrlInput.value;
+                if (!full.trim()) {
+                    parseResult.style.display = 'none';
+                    parseMessage.textContent = 'Please enter a valid DRM URL.';
+                    parseMessage.className = 'parse-result-message error';
+                    return;
+                }
+
+                const parsed = parseFullUrl(full);
+                if (parsed) {
+                    parsedStream.value = parsed.stream;
+                    parsedKeyId.value = parsed.keyId;
+                    parsedDrmKey.value = parsed.drmKey;
+                    parseResult.style.display = 'block';
+                    parseMessage.textContent = '✅ Parsed successfully!';
+                    parseMessage.className = 'parse-result-message success';
+                } else {
+                    parseResult.style.display = 'none';
+                    parseMessage.textContent = '❌ Could not parse URL. Make sure it contains "|drmScheme=clearkey&drmLicense=..."';
+                    parseMessage.className = 'parse-result-message error';
+                }
+            }
+
+            // ─── Copy function ───
+            function copyResult(input, feedbackEl) {
+                const text = input.value;
+                if (!text) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showFeedback(feedbackEl);
+                    }).catch(() => {
+                        fallbackCopy(input, feedbackEl);
+                    });
+                } else {
+                    fallbackCopy(input, feedbackEl);
+                }
+            }
+
+            function fallbackCopy(input, feedbackEl) {
+                input.select();
+                try {
+                    document.execCommand('copy');
+                    showFeedback(feedbackEl);
+                } catch (_) {}
+                input.setSelectionRange(0, 0);
+            }
+
+            let copyTimeout = null;
+
+            function showFeedback(el) {
+                el.classList.add('show');
+                clearTimeout(copyTimeout);
+                copyTimeout = setTimeout(() => {
+                    el.classList.remove('show');
+                }, 2000);
+            }
+
+            // ─── Load example ───
+            function loadExampleForGenerate() {
+                streamUrlInput.value = EXAMPLE.streamUrl;
+                keyIdInput.value = EXAMPLE.keyId;
+                drmKeyInput.value = EXAMPLE.drmKey;
+                validateGenerate();
+                streamUrlInput.classList.add('valid');
+                streamUrlInput.classList.remove('invalid');
+                // generate automatically
+                handleGenerate(new Event('submit'));
+            }
+
+            function loadExampleForParse() {
+                const full = buildFullUrl(EXAMPLE.streamUrl, EXAMPLE.keyId, EXAMPLE.drmKey);
+                if (full) fullUrlInput.value = full;
+                // parse automatically
+                handleParse(new Event('submit'));
+            }
+
+            // ─── Tab switching ───
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const panels = {
+                generate: document.getElementById('panel-generate'),
+                parse: document.getElementById('panel-parse')
+            };
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    // update active button
+                    tabBtns.forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
+                    });
+                    this.classList.add('active');
+                    this.setAttribute('aria-selected', 'true');
+
+                    // show panel
+                    Object.keys(panels).forEach(key => {
+                        panels[key].classList.toggle('active', key === tab);
+                    });
+                });
+            });
+
+            // ─── Event listeners ───
+
+            // Generate
+            generateForm.addEventListener('submit', handleGenerate);
+
+            copyBtnGen.addEventListener('click', function() {
+                copyResult(resultUrlInput, copyFeedbackGen);
+            });
+
+            // Parse
+            parseForm.addEventListener('submit', handleParse);
+
+            // Example badges
+            document.getElementById('exampleBadgeGenerate').addEventListener('click', loadExampleForGenerate);
+            document.getElementById('exampleBadgeParse').addEventListener('click', loadExampleForParse);
+
+            // Live validation on generate tab
+            keyIdInput.addEventListener('input', validateGenerate);
+            drmKeyInput.addEventListener('input', validateGenerate);
+            streamUrlInput.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.add('valid');
+                    this.classList.remove('invalid');
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.remove('invalid');
+                }
+            });
+
+            // Auto-generate on paste in generate tab
+            streamUrlInput.addEventListener('paste', function() {
+                setTimeout(() => handleGenerate(new Event('submit')), 50);
+            });
+
+            // Ctrl+Enter for generate
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    // if active tab is generate, trigger generate
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab && activeTab.dataset.tab === 'generate') {
+                        e.preventDefault();
+                        handleGenerate(new Event('submit'));
+                    } else if (activeTab && activeTab.dataset.tab === 'parse') {
+                        e.preventDefault();
+                        handleParse(new Event('submit'));
+                    }
+                }
+            });
+
+            // Auto-load example on start
+            setTimeout(loadExampleForGenerate, 100);
+            // also pre-fill parse example but don't auto-parse until they click
+            // we'll set the value but leave it empty for parse tab
+            setTimeout(() => {
+                const full = buildFullUrl(EXAMPLE.streamUrl, EXAMPLE.keyId, EXAMPLE.drmKey);
+                if (full) fullUrlInput.value = full;
+            }, 150);
+
+            // Click on result input selects all
+            resultUrlInput.addEventListener('click', function() { this.select(); });
+            resultUrlInput.addEventListener('focus', function() { this.select(); });
+
+            // Also for parsed fields, but readonly anyway
+            [parsedStream, parsedKeyId, parsedDrmKey].forEach(inp => {
+                inp.addEventListener('click', function() { this.select(); });
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
