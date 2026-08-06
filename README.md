@@ -1,6 +1,6 @@
 # 🔐 DRM URL Converter
 
-A clean, client-side web tool to convert between a **ClearKey DRM manifest URL** and its individual components (stream URL, Key ID, DRM Key). No data leaves your browser.
+A clean, client-side web tool to convert between a **ClearKey DRM manifest URL** and its individual components (stream URL, Key ID, DRM Key) to any network stream playable
 
 ## ✨ Features
 
